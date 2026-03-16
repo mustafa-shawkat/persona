@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>جدول الدروس الأسبوعي</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+
+body{
+font-family:Tahoma;
+background:#f4f4f4;
+padding:20px;
+text-align:center;
+}
+
+h2{
+margin-bottom:10px;
+}
+
+.controls{
+margin-bottom:15px;
+}
+
+button{
+padding:8px 16px;
+margin:4px;
+border:none;
+border-radius:4px;
+background:#1565c0;
+color:white;
+cursor:pointer;
+font-size:14px;
+}
+
+button:hover{
+background:#0d47a1;
+}
+
+.container{
+background:white;
+padding:10px;
+border:1px solid #ccc;
+overflow:auto;
+position:relative;
+}
+
+/* watermark */
+
+.watermark{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:200px;
+color:rgba(0,0,0,0.05);
+pointer-events:none;
+font-weight:bold;
+}
+
+/* table */
+
+table{
+border-collapse:collapse;
+margin:auto;
+}
+
+th,td{
+border:1px solid #777;
+height:28px;
+min-width:70px;
+font-size:12px;
+text-align:center;
+}
+
+thead th{
+font-weight:bold;
+}
+
+.grade{
+background:#d6eaf8;
+}
+
+.day{
+background:#d5f5e3;
+}
+
+.lesson{
+background:#fdebd0;
+}
+
+.subject{
+background:#f5b7b1;
+}
+
+.week{
+background:#eeeeee;
+font-weight:bold;
+min-width:60px;
+}
+
+select,input{
+width:100%;
+border:none;
+text-align:center;
+background:transparent;
+}
+
+tfoot td{
+background:#eeeeee;
+font-weight:bold;
+height:35px;
+}
+
+/* print */
+
+@media print{
+
+button{
+display:none;
+}
+
+body{
+background:white;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>جدول الدروس الأسبوعي</h2>
+
+<div class="controls">
+<button onclick="exportExcel()">📊 تصدير Excel</button>
+<button onclick="window.print()">🖨 طباعة</button>
+<button onclick="clearData()">🗑 مسح البيانات</button>
+</div>
+
+<div class="container">
+
+<div class="watermark">نموذج</div>
+
+<table id="schedule">
+
+<thead>
+
+<tr>
+
+<th rowspan="2" class="week">الأسبوع</th>
+
+<th colspan="3" class="grade">الأولى متوسط</th>
+<th colspan="3" class="grade">الثانية متوسط</th>
+<th colspan="3" class="grade">الثالثة متوسط</th>
+<th colspan="3" class="grade">الرابعة متوسط</th>
+<th colspan="3" class="grade">الخامسة متوسط</th>
+<th colspan="3" class="grade">السادسة متوسط</th>
+
+</tr>
+
+<tr>
+
+<script>
+</script>
+
+</tr>
+
+</thead>
+
+<tbody id="rows"></tbody>
+
+<tfoot>
+<tr>
+<td colspan="19">اسم المؤسسة — التوقيع</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+
+<script>
+
+const weekdays=[
+"",
+"الأحد",
+"الإثنين",
+"الثلاثاء",
+"الأربعاء",
+"الخميس"
+]
+
+const subjects=[
+"",
+"رياضيات",
+"علوم",
+"لغة عربية",
+"لغة فرنسية",
+"لغة إنجليزية",
+"تاريخ",
+"جغرافيا",
+"تربية إسلامية",
+"تكنولوجيا",
+"تربية بدنية"
+]
+
+const grades=6
+const weeks=36
+
+const table=document.getElementById("schedule")
+const headerRow=table.tHead.rows[1]
+
+for(let g=0;g<grades;g++){
+
+let th1=document.createElement("th")
+th1.className="day"
+th1.innerText="اليوم"
+
+let th2=document.createElement("th")
+th2.className="lesson"
+th2.innerText="الدرس"
+
+let th3=document.createElement("th")
+th3.className="subject"
+th3.innerText="المادة"
+
+headerRow.appendChild(th1)
+headerRow.appendChild(th2)
+headerRow.appendChild(th3)
+
+}
+
+function createSelect(options){
+
+let select=document.createElement("select")
+
+options.forEach(o=>{
+let op=document.createElement("option")
+op.text=o
+select.add(op)
+})
+
+return select
+
+}
+
+const body=document.getElementById("rows")
+
+for(let w=1;w<=weeks;w++){
+
+let tr=document.createElement("tr")
+
+let week=document.createElement("td")
+week.className="week"
+week.textContent=w+"/1"
+
+tr.appendChild(week)
+
+for(let g=0;g<grades;g++){
+
+let tdDay=document.createElement("td")
+let tdLesson=document.createElement("td")
+let tdSubject=document.createElement("td")
+
+tdDay.appendChild(createSelect(weekdays))
+
+let lesson=document.createElement("input")
+tdLesson.appendChild(lesson)
+
+tdSubject.appendChild(createSelect(subjects))
+
+tr.appendChild(tdDay)
+tr.appendChild(tdLesson)
+tr.appendChild(tdSubject)
+
+}
+
+body.appendChild(tr)
+
+}
+
+function exportExcel(){
+
+let wb=XLSX.utils.table_to_book(document.getElementById("schedule"),{sheet:"Schedule"})
+XLSX.writeFile(wb,"weekly_schedule.xlsx")
+
+}
+
+/* autosave */
+
+function save(){
+
+localStorage.setItem("schedule",document.querySelector(".container").innerHTML)
+
+}
+
+function load(){
+
+let data=localStorage.getItem("schedule")
+
+if(data){
+document.querySelector(".container").innerHTML=data
+}
+
+}
+
+setInterval(save,2000)
+
+function clearData(){
+
+if(confirm("مسح كل البيانات؟")){
+
+localStorage.removeItem("schedule")
+location.reload()
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
